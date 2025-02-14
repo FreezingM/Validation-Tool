@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>区块链验证工具</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>区块链验证工具</h1>
+        
+        <div class="form-section">
+            <h2>1. 选择链</h2>
+            <div class="chain-selector">
+                <div class="form-group">
+                    <label for="sourceChain">源链：</label>
+                    <select id="sourceChain" required>
+                        <option value="">请选择源链</option>
+                        <option value="ethereum">以太坊</option>
+                        <option value="eos">EOS链</option>
+                        <option value="local">本地文件</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="targetChain">目标链：</label>
+                    <select id="targetChain" required>
+                        <option value="">请选择目标链</option>
+                        <option value="ethereum">以太坊</option>
+                        <option value="eos">EOS链</option>
+                        <option value="local">本地文件</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>2. 选择区块范围</h2>
+            <div class="block-range">
+                <div class="form-group">
+                    <label for="startBlock">起始区块：</label>
+                    <input type="number" id="startBlock" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="endBlock">结束区块：</label>
+                    <input type="number" id="endBlock" min="0" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>3. 验证方式</h2>
+            <div class="validation-type">
+                <div class="form-group">
+                    <input type="radio" id="fullValidation" name="validationType" value="full" checked>
+                    <label for="fullValidation">全量校验</label>
+                </div>
+                <div class="form-group">
+                    <input type="radio" id="sampleValidation" name="validationType" value="sample">
+                    <label for="sampleValidation">抽样校验</label>
+                </div>
+                <div class="form-group" id="sampleRateGroup" style="display: none;">
+                    <label for="sampleRate">抽样率（%）：</label>
+                    <input type="number" id="sampleRate" min="1" max="100" value="10">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>4. 验证报告</h2>
+            <div class="report-section">
+                <button id="generateReport" class="btn">生成报告</button>
+                <div id="reportResult" class="report-result" style="display: none;">
+                    <h3>验证报告</h3>
+                    <div id="reportContent"></div>
+                    <button id="exportCSV" class="btn">导出CSV</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
