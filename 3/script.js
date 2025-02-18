@@ -1,74 +1,118 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // 获取元素
-    const sampleValidation = document.getElementById('sampleValidation');
-    const fullValidation = document.getElementById('fullValidation');
-    const sampleRateGroup = document.getElementById('sampleRateGroup');
-    const generateReport = document.getElementById('generateReport');
+    // 获取所有需要的DOM元素
+    const generateReportBtn = document.getElementById('generateReport');
     const reportResult = document.getElementById('reportResult');
     const reportContent = document.getElementById('reportContent');
-    const exportCSV = document.getElementById('exportCSV');
-
-    // 处理抽样校验选项的显示/隐藏
-    sampleValidation.addEventListener('change', function() {
-        sampleRateGroup.style.display = 'block';
+    
+    // 监听验证类型的变化，控制抽样率输入框的显示/隐藏
+    document.querySelectorAll('input[name="validationType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const sampleRateGroup = document.getElementById('sampleRateGroup');
+            sampleRateGroup.style.display = this.value === 'sample' ? 'block' : 'none';
+        });
     });
 
-    fullValidation.addEventListener('change', function() {
-        sampleRateGroup.style.display = 'none';
-    });
+    // 点击生成报告按钮时的处理
+    generateReportBtn.addEventListener('click', async function() {
+        // 收集表单数据
+        const formData = {
+            sourceChain: document.getElementById('sourceChain').value,
+            targetChain: document.getElementById('targetChain').value,
+            startBlock: document.getElementById('startBlock').value,
+            endBlock: document.getElementById('endBlock').value,
+            validationType: document.querySelector('input[name="validationType"]:checked').value,
+            sampleRate: document.getElementById('sampleRate').value
+        };
 
-    // 生成报告
-    generateReport.addEventListener('click', function() {
-        const sourceChain = document.getElementById('sourceChain').value;
-        const targetChain = document.getElementById('targetChain').value;
-        const startBlock = document.getElementById('startBlock').value;
-        const endBlock = document.getElementById('endBlock').value;
-        const validationType = document.querySelector('input[name="validationType"]:checked').value;
-        const sampleRate = document.getElementById('sampleRate').value;
-
-        // 验证表单
-        if (!sourceChain || !targetChain || !startBlock || !endBlock) {
-            alert('请填写所有必要信息！');
+        // 表单验证
+        if (!validateForm(formData)) {
             return;
         }
 
-        // 生成报告内容
-        const reportHTML = `
-            <p><strong>验证时间：</strong> ${new Date().toLocaleString()}</p>
-            <p><strong>源链：</strong> ${sourceChain}</p>
-            <p><strong>目标链：</strong> ${targetChain}</p>
-            <p><strong>区块范围：</strong> ${startBlock} - ${endBlock}</p>
-            <p><strong>验证方式：</strong> ${validationType === 'full' ? '全量校验' : '抽样校验'}</p>
-            ${validationType === 'sample' ? `<p><strong>抽样率：</strong> ${sampleRate}%</p>` : ''}
-        `;
+        try {
+            // 显示加载状态
+            generateReportBtn.disabled = true;
+            generateReportBtn.textContent = '生成报告中...';
 
-        reportContent.innerHTML = reportHTML;
-        reportResult.style.display = 'block';
+            // 发送API请求
+            //json格式发送
+            const response = await fetch('/api', {//在这里修改API的地址
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // 显示报告结果
+                displayReport(data);
+            } else {
+                throw new Error(data.message || '生成报告失败');
+            }
+
+        } catch (error) {
+            alert('错误：' + error.message);
+        } finally {
+            // 恢复按钮状态
+            generateReportBtn.disabled = false;
+            generateReportBtn.textContent = '生成报告';
+        }
     });
 
-    // 导出CSV
-    exportCSV.addEventListener('click', function() {
-        const sourceChain = document.getElementById('sourceChain').value;
-        const targetChain = document.getElementById('targetChain').value;
-        const startBlock = document.getElementById('startBlock').value;
-        const endBlock = document.getElementById('endBlock').value;
-        
-        // 创建CSV内容
-        const csvContent = `源链,目标链,起始区块,结束区块\n${sourceChain},${targetChain},${startBlock},${endBlock}`;
-        
-        // 创建Blob对象
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        
-        // 创建下载链接
-        const link = document.createElement("a");
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", `验证报告_${new Date().getTime()}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+    // 表单验证函数
+    function validateForm(data) {
+        if (!data.sourceChain) {
+            alert('请选择源链');
+            return false;
         }
+        if (!data.targetChain) {
+            alert('请选择目标链');
+            return false;
+        }
+        if (!data.startBlock) {
+            alert('请输入起始区块');
+            return false;
+        }
+        if (!data.endBlock) {
+            alert('请输入结束区块');
+            return false;
+        }
+        if (parseInt(data.startBlock) > parseInt(data.endBlock)) {
+            alert('起始区块不能大于结束区块');
+            return false;
+        }
+        if (data.validationType === 'sample' && 
+            (data.sampleRate < 1 || data.sampleRate > 100)) {
+            alert('抽样率必须在1-100之间');
+            return false;
+        }
+        return true;
+    }
+
+    // 输出报告结果
+    function displayReport(data) {
+        reportResult.style.display = 'block';
+        reportContent.innerHTML = `
+            <div class="report-item">
+                <p>验证状态: ${data.status}</p>
+                <p>验证区块数: ${data.totalBlocks}</p>
+                <p>匹配区块数: ${data.matchedBlocks}</p>
+                <p>不匹配区块数: ${data.unmatchedBlocks}</p>
+                <p>验证完成时间: ${new Date().toLocaleString()}</p>
+                ${data.errorBlock ? `
+                    <p>异常区块: ${data.errorBlock}</p>
+                    <p>异常内容: ${data.errorContent}</p>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    // 导出CSV功能
+    document.getElementById('exportCSV').addEventListener('click', function() {
+        // 此功能未写
+        alert('导出CSV功能待实现');
     });
 }); 
