@@ -7,8 +7,8 @@ from decimal import Decimal
 
 # 设置代理
 proxy = {
-    'http': 'http://localhost:7890',  # 使用本地代理（可以换成其他代理地址）
-    'https': 'http://localhost:7890'  # 使用本地代理（可以换成其他代理地址）
+    # 'http': 'http://localhost:7890',  # 使用本地代理（可以换成其他代理地址）
+    # 'https': 'http://localhost:7890'  # 使用本地代理（可以换成其他代理地址）
 }
 
 # 连接到 Ganache 本地测试网络
