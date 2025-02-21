@@ -13,22 +13,27 @@ header_collection = db["block_headers"]  # 区块头信息集合
 transaction_collection = db["transactions"]  # 交易信息集合
 state_collection = db["state_database"]  # 状态信息集合
 
-# 存储最新已处理区块号的文件
-LAST_EOS_BLOCK_FILE = "eos_last_processed_block.txt"
+# MongoDB 中存储最新已处理区块号的集合
+block_info_collection = db["block_info"]
 
 
 # 读取上次已处理的最新区块号
 def get_last_processed_block():
-    if os.path.exists(LAST_EOS_BLOCK_FILE):
-        with open(LAST_EOS_BLOCK_FILE, "r") as f:
-            return int(f.read().strip())  # 读取并转换为整数
-    return None  # 如果文件不存在，返回 None
+    # 从 MongoDB 中读取最新的区块号
+    block_info = block_info_collection.find_one({"type": "last_processed_block"})
+    if block_info:
+        return block_info["block_number"]
+    return None  # 如果没有记录，返回 None
 
 
 # 写入最新的已处理区块号
 def save_last_processed_block(block_number):
-    with open(LAST_EOS_BLOCK_FILE, "w") as f:
-        f.write(str(block_number))  # 记录最新的区块号
+    # 将最新的区块号存储到 MongoDB
+    block_info_collection.update_one(
+        {"type": "last_processed_block"},
+        {"$set": {"block_number": block_number}},
+        upsert=True  # 如果没有该记录，则插入新记录
+    )
 
 
 # 获取最新区块号
@@ -109,105 +114,111 @@ def get_contract_code(account_name):
     return {}
 
 
-# 主逻辑
-try:
-    # 获取 EOS 最新区块号
-    latest_block_number = get_latest_block()
-    if latest_block_number is None:
-        print("无法获取最新区块号，程序终止。")
-        exit()
+# 封装的爬取 EOS 链数据的函数
+def fetch_eos_data(start_block, end_block):
+    try:
+        # 获取 EOS 最新区块号
+        latest_block_number = get_latest_block()
+        if latest_block_number is None:
+            print("无法获取最新区块号，程序终止。")
+            return
 
-    print(f"EOS 最新区块号: {latest_block_number}")
+        print(f"EOS 最新区块号: {latest_block_number}")
 
-    # 确定起始区块号
-    last_processed_block = get_last_processed_block()
-    if last_processed_block is None:  # 首次运行
-        start_block_number = latest_block_number - 9  # 获取最新10个区块
-    else:
-        start_block_number = last_processed_block + 1  # 断点续传
+        # 从数据库获取最新已处理的区块号
+        last_processed_block = get_last_processed_block()
+        if last_processed_block is not None:
+            print(f"上次处理的区块号: {last_processed_block}")
+            # 如果start_block小于last_processed_block，跳过已经处理的区块
+            start_block = max(start_block, last_processed_block + 1)  # 避免重复处理
 
-    # 遍历区块
-    for block_num in range(start_block_number, latest_block_number + 1):
-        block_details = get_block(block_num)
-        if not block_details:
-            continue  # 如果获取失败，跳过
+        # 如果传入的 end_block 超过了最新区块号，则修正为最新区块号
+        if end_block > latest_block_number:
+            print(f"警告: end_block 超过最新区块号, 将 end_block 修正为 {latest_block_number}")
+            end_block = latest_block_number
 
-        # 提取区块头信息
-        block_number = block_details['block_num']
-        block_id = block_details['id']
-        timestamp = block_details['timestamp']
-        producer = block_details['producer']
-        transaction_count = len(block_details['transactions'])
+        # 遍历区块范围
+        for block_num in range(start_block, end_block + 1):
+            block_details = get_block(block_num)
+            if not block_details:
+                continue  # 如果获取失败，跳过
 
-        # 将区块头信息存储到 MongoDB
-        block_header = {
-            "block_number": block_number,
-            "block_id": block_id,
-            "timestamp": timestamp,
-            "producer": producer,
-            "transaction_count": transaction_count
-        }
-        header_collection.insert_one(block_header)
-        print(f"区块头信息: {block_number} 已存储到 MongoDB")
+            # 提取区块头信息
+            block_number = block_details['block_num']
+            block_id = block_details['id']
+            timestamp = block_details['timestamp']
+            producer = block_details['producer']
+            transaction_count = len(block_details['transactions'])
 
-        # 处理交易信息
-        unique_accounts = set()  # 记录涉及的账户
-        for tx in block_details['transactions']:
-            tx_id = tx['trx']['id'] if isinstance(tx['trx'], dict) else "N/A"  # 获取交易 ID
-            actions = tx['trx'].get('transaction', {}).get('actions', []) if isinstance(tx['trx'], dict) else []
-
-            sender = "N/A"
-            receiver = "N/A"
-            action_details = []
-
-            for action in actions:
-                sender = action['authorization'][0]['actor'] if 'authorization' in action and action['authorization'] else "N/A"
-                receiver = action['account']
-                action_details.append(f"{action['name']}({action.get('data', {})})")
-
-            # 将交易信息存储到 MongoDB
-            transaction = {
+            # 将区块头信息存储到 MongoDB
+            block_header = {
                 "block_number": block_number,
-                "tx_id": tx_id,
-                "sender": sender,
-                "receiver": receiver,
-                "actions": "; ".join(action_details)
+                "block_id": block_id,
+                "timestamp": timestamp,
+                "producer": producer,
+                "transaction_count": transaction_count
             }
-            transaction_collection.insert_one(transaction)
-            print(f"交易信息: 区块 {block_number} 交易 {tx_id} 已存储到 MongoDB")
+            header_collection.insert_one(block_header)
+            print(f"区块头信息: {block_number} 已存储到 MongoDB")
 
-            # 记录账户用于后续状态查询
-            unique_accounts.add(sender)
-            unique_accounts.add(receiver)
+            # 处理交易信息
+            unique_accounts = set()  # 记录涉及的账户
+            for tx in block_details['transactions']:
+                tx_id = tx['trx']['id'] if isinstance(tx['trx'], dict) else "N/A"  # 获取交易 ID
+                actions = tx['trx'].get('transaction', {}).get('actions', []) if isinstance(tx['trx'], dict) else []
 
-        # 处理状态数据库信息
-        for account in unique_accounts:
-            # 获取账户余额
-            balance = get_account_balance(account)
+                sender = "N/A"
+                receiver = "N/A"
+                action_details = []
 
-            # 获取账户权限
-            permissions = get_account_permissions(account)
+                for action in actions:
+                    sender = action['authorization'][0]['actor'] if 'authorization' in action and action['authorization'] else "N/A"
+                    receiver = action['account']
+                    action_details.append(f"{action['name']}({action.get('data', {})})")
 
-            # 获取合约代码
-            contract_code = get_contract_code(account)
-            contract_address = account
+                # 将交易信息存储到 MongoDB
+                transaction = {
+                    "block_number": block_number,
+                    "tx_id": tx_id,
+                    "sender": sender,
+                    "receiver": receiver,
+                    "actions": "; ".join(action_details)
+                }
+                transaction_collection.insert_one(transaction)
+                print(f"交易信息: 区块 {block_number} 交易 {tx_id} 已存储到 MongoDB")
 
-            # 将信息存储到 MongoDB
-            state_info = {
-                "block_number": block_number,
-                "account_address": account,
-                "balance": balance.get('EOS', '0.0'),
-                "permissions": str(permissions),
-                "contract_address": contract_address,
-                "contract_code": str(contract_code.get('code_hash', 'N/A'))[:50]
-            }
-            state_collection.insert_one(state_info)
-            print(f"状态信息: 区块 {block_number} 账户 {account} 已存储到 MongoDB")
+                # 记录账户用于后续状态查询
+                unique_accounts.add(sender)
+                unique_accounts.add(receiver)
 
-        # 记录当前已处理的最新区块号
-        save_last_processed_block(block_number)
+            # 处理状态数据库信息
+            for account in unique_accounts:
+                # 获取账户余额
+                balance = get_account_balance(account)
 
-    print("数据已成功存储到 MongoDB 中！")
+                # 获取账户权限
+                permissions = get_account_permissions(account)
 
-except Exception as e:
-    print(f"发生错误，连接失败: {e}")
+                # 获取合约代码
+                contract_code = get_contract_code(account)
+                contract_address = account
+
+                # 将信息存储到 MongoDB
+                state_info = {
+                    "block_number": block_number,
+                    "account_address": account,
+                    "balance": balance.get('EOS', '0.0'),
+                    "permissions": str(permissions),
+                    "contract_address": contract_address,
+                    "contract_code": str(contract_code.get('code_hash', 'N/A'))[:50]
+                }
+                state_collection.insert_one(state_info)
+                print(f"状态信息: 区块 {block_number} 账户 {account} 已存储到 MongoDB")
+
+            # 记录当前已处理的最新区块号
+            save_last_processed_block(block_number)
+
+        print("数据已成功存储到 MongoDB 中！")
+
+    except Exception as e:
+        print(f"发生错误，连接失败: {e}")
