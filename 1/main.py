@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
-from eos import fetch_eos_data
-from sepolia import fetch_sepolia_data
-from ganache import fetch_ganache_data
+from Eos import fetch_eos_data
+from Sepolia import fetch_sepolia_data
+from Ganache import fetch_ganache_data
 
 app = Flask(__name__)
 

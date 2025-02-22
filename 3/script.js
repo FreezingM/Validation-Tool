@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // 发送API请求
             //json格式发送
-            const response = await fetch('/api', {//在这里修改API的地址
+            const response = await fetch('http://127.0.0.1:5000', {//在这里修改API的地址
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
