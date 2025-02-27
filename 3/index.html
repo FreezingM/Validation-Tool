@@ -11,39 +11,55 @@
         <h1>区块链验证工具</h1>
         
         <div class="form-section">
-            <h2>1. 选择链</h2>
+            <h2>选择验证链</h2>
             <div class="chain-selector">
                 <div class="form-group">
-                    <label for="sourceChain">源链：</label>
-                    <select id="sourceChain" required>
-                        <option value="">请选择源链</option>
-                        <option value="ethereum">以太坊</option>
-                        <option value="eos">EOS链</option>
-                        <option value="local">本地文件</option>
+                    <label for="sourceChain">源链:</label>
+                    <select id="sourceChain">
+                        <option value="">请选择</option>
+                        <option value="Eos">Eos</option>
+                        <option value="Sepolia">Sepolia</option>
+                        <option value="Ganache">Ganache</option>
+                        <option value="LocalFile">本地文件</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="targetChain">目标链：</label>
-                    <select id="targetChain" required>
-                        <option value="">请选择目标链</option>
-                        <option value="ethereum">以太坊</option>
-                        <option value="eos">EOS链</option>
-                        <option value="local">本地文件</option>
+                    <label for="targetChain">目标链:</label>
+                    <select id="targetChain">
+                        <option value="">请选择</option>
+                        <option value="Eos">Eos</option>
+                        <option value="Sepolia">Sepolia</option>
+                        <option value="Ganache">Ganache</option>
+                        <option value="LocalFile">本地文件</option>
                     </select>
                 </div>
             </div>
         </div>
 
         <div class="form-section">
-            <h2>2. 选择区块范围</h2>
+            <h2>区块范围</h2>
             <div class="block-range">
-                <div class="form-group">
-                    <label for="startBlock">起始区块：</label>
-                    <input type="number" id="startBlock" min="0" required>
+                <div class="source-blocks">
+                    <h3>源链区块范围</h3>
+                    <div class="form-group">
+                        <label for="sourceStartBlock">起始区块:</label>
+                        <input type="number" id="sourceStartBlock" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="sourceEndBlock">结束区块:</label>
+                        <input type="number" id="sourceEndBlock" min="0">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="endBlock">结束区块：</label>
-                    <input type="number" id="endBlock" min="0" required>
+                <div class="target-blocks">
+                    <h3>目标链区块范围</h3>
+                    <div class="form-group">
+                        <label for="targetStartBlock">起始区块:</label>
+                        <input type="number" id="targetStartBlock" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="targetEndBlock">结束区块:</label>
+                        <input type="number" id="targetEndBlock" min="0">
+                    </div>
                 </div>
             </div>
         </div>

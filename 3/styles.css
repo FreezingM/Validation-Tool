@@ -144,4 +144,40 @@ select:focus, input:focus {
         flex-direction: column;
         align-items: flex-start;
     }
+}
+
+/* 日志显示区域样式 */
+.log-content {
+    height: 300px;
+    overflow-y: auto;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 10px 0;
+    font-family: monospace;
+}
+
+.log-entry {
+    margin: 5px 0;
+    padding: 3px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.error-log {
+    color: #dc3545;
+}
+
+/* 美化滚动条 */
+.log-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.log-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.log-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
 } 
