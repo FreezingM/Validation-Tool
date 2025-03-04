@@ -45,21 +45,15 @@ def convert_decimal_to_float(data):
         data = float(data)  # 转换为 float
     return data
 
+def fetch_sepolia_data(sepolia_url, start_block, end_block):
+    # 初始化 Web3 实例
+    w3 = Web3(Web3.HTTPProvider(sepolia_url))
 
-def fetch_sepolia_data(start_block, end_block):
     # 设置代理
     proxy = {
         'http': 'http://localhost:7890',  # 使用本地代理（可以换成其他代理地址）
         'https': 'http://localhost:7890'  # 使用本地代理（可以换成其他代理地址）
     }
-
-    # 连接到 Sepolia 测试网络（通过 Infura）
-    infura_url = 'https://sepolia.infura.io/v3/142d8db9e3a340f0addbf5882edae001'  # Infura 提供的连接 Sepolia 测试网的 API URL
-    session = requests.Session()
-    session.proxies.update(proxy)
-
-    # 初始化 Web3 实例
-    w3 = Web3(Web3.HTTPProvider(infura_url, session=session))
 
     try:
         # 获取最新区块号
@@ -144,3 +138,11 @@ def fetch_sepolia_data(start_block, end_block):
 
     except Exception as e:
         print(f"发生错误，连接失败: {e}")
+
+
+# if __name__ == '__main__':
+#     sepolia_url = input("请输入URL: ")  # https://sepolia.infura.io/v3/142d8db9e3a340f0addbf5882edae001
+#     start_block = int(input("请输入起始区块号: "))
+#     end_block = int(input("请输入结束区块号: "))
+#     fetch_sepolia_data(sepolia_url, start_block, end_block)
+

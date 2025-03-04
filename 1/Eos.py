@@ -3,9 +3,6 @@ import requests
 from pymongo import MongoClient
 from decimal import Decimal
 
-# EOS 公共 RPC 节点
-EOS_RPC_URL = "https://eos.greymass.com"
-
 # MongoDB 连接配置
 client = MongoClient("mongodb://localhost:27017/")  # 默认连接本地 MongoDB
 db = client["eos_blockchain"]  # 创建数据库
@@ -37,9 +34,9 @@ def save_last_processed_block(block_number):
 
 
 # 获取最新区块号
-def get_latest_block():
+def get_latest_block(eos_rpc_url):
     """获取最新区块信息"""
-    url = f"{EOS_RPC_URL}/v1/chain/get_info"
+    url = f"{eos_rpc_url}/v1/chain/get_info"
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()["head_block_num"]  # 返回最新区块号
@@ -48,9 +45,9 @@ def get_latest_block():
 
 
 # 获取区块详细信息
-def get_block(block_num):
+def get_block(eos_rpc_url, block_num):
     """获取指定区块的详细信息"""
-    url = f"{EOS_RPC_URL}/v1/chain/get_block"
+    url = f"{eos_rpc_url}/v1/chain/get_block"
     payload = {"block_num_or_id": block_num}
     response = requests.post(url, json=payload)
     if response.status_code == 200:
@@ -60,9 +57,9 @@ def get_block(block_num):
 
 
 # 获取账户余额
-def get_account_balance(account_name):
+def get_account_balance(eos_rpc_url, account_name):
     """获取账户余额"""
-    url = f"{EOS_RPC_URL}/v1/chain/get_account"
+    url = f"{eos_rpc_url}/v1/chain/get_account"
     payload = {"account_name": account_name}
     response = requests.post(url, json=payload)
     if response.status_code == 200:
@@ -89,9 +86,9 @@ def get_account_balance(account_name):
 
 
 # 获取账户权限
-def get_account_permissions(account_name):
+def get_account_permissions(eos_rpc_url, account_name):
     """获取账户权限"""
-    url = f"{EOS_RPC_URL}/v1/chain/get_account"
+    url = f"{eos_rpc_url}/v1/chain/get_account"
     payload = {"account_name": account_name}
     response = requests.post(url, json=payload)
     if response.status_code == 200:
@@ -103,9 +100,9 @@ def get_account_permissions(account_name):
 
 
 # 获取合约代码
-def get_contract_code(account_name):
+def get_contract_code(eos_rpc_url, account_name):
     """获取账户合约代码"""
-    url = f"{EOS_RPC_URL}/v1/chain/get_code"
+    url = f"{eos_rpc_url}/v1/chain/get_code"
     payload = {"account_name": account_name}
     response = requests.post(url, json=payload)
     if response.status_code == 200:
@@ -115,10 +112,10 @@ def get_contract_code(account_name):
 
 
 # 封装的爬取 EOS 链数据的函数
-def fetch_eos_data(start_block, end_block):
+def fetch_eos_data(eos_rpc_url, start_block, end_block):
     try:
         # 获取 EOS 最新区块号
-        latest_block_number = get_latest_block()
+        latest_block_number = get_latest_block(eos_rpc_url)
         if latest_block_number is None:
             print("无法获取最新区块号，程序终止。")
             return
@@ -139,7 +136,7 @@ def fetch_eos_data(start_block, end_block):
 
         # 遍历区块范围
         for block_num in range(start_block, end_block + 1):
-            block_details = get_block(block_num)
+            block_details = get_block(eos_rpc_url, block_num)
             if not block_details:
                 continue  # 如果获取失败，跳过
 
@@ -194,13 +191,13 @@ def fetch_eos_data(start_block, end_block):
             # 处理状态数据库信息
             for account in unique_accounts:
                 # 获取账户余额
-                balance = get_account_balance(account)
+                balance = get_account_balance(eos_rpc_url, account)
 
                 # 获取账户权限
-                permissions = get_account_permissions(account)
+                permissions = get_account_permissions(eos_rpc_url, account)
 
                 # 获取合约代码
-                contract_code = get_contract_code(account)
+                contract_code = get_contract_code(eos_rpc_url, account)
                 contract_address = account
 
                 # 将信息存储到 MongoDB
@@ -222,3 +219,10 @@ def fetch_eos_data(start_block, end_block):
 
     except Exception as e:
         print(f"发生错误，连接失败: {e}")
+
+
+# if __name__ == '__main__':
+#     eos_rpc_url = input("请输入URL: ")  # https://eos.greymass.com
+#     start_block = int(input("请输入起始区块号: "))
+#     end_block = int(input("请输入结束区块号: "))
+#     fetch_eos_data(eos_rpc_url, start_block, end_block)
