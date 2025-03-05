@@ -146,6 +146,37 @@ select:focus, input:focus {
     }
 }
 
+/* 按钮样式 */
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#extractData {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#validateData {
+    background-color: #2196F3;
+    color: white;
+}
+
+.btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
 /* 日志显示区域样式 */
 .log-content {
     height: 300px;
@@ -162,6 +193,8 @@ select:focus, input:focus {
     margin: 5px 0;
     padding: 3px 0;
     border-bottom: 1px solid #eee;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .error-log {
@@ -180,4 +213,53 @@ select:focus, input:focus {
 .log-content::-webkit-scrollbar-thumb {
     background: #888;
     border-radius: 4px;
+}
+
+/* 修改按钮组样式，使其居中对称 */
+.button-group-center {
+    display: flex;
+    justify-content: center;
+    gap: 40px; /* 增加按钮之间的间距 */
+    margin: 20px 0;
+}
+
+.btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    min-width: 120px; /* 确保按钮宽度一致 */
+}
+
+#extractData {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#validateData {
+    background-color: #2196F3;
+    color: white;
+}
+
+/* 报告生成按钮样式 */
+.report-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.btn-blue {
+    background-color: #2196F3;
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+.btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
 } 

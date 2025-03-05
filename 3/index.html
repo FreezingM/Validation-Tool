@@ -65,7 +65,7 @@
         </div>
 
         <div class="form-section">
-            <h2>3. 验证方式</h2>
+            <h2>验证方式</h2>
             <div class="validation-type">
                 <div class="form-group">
                     <input type="radio" id="fullValidation" name="validationType" value="full" checked>
@@ -83,14 +83,21 @@
         </div>
 
         <div class="form-section">
-            <h2>4. 验证报告</h2>
-            <div class="report-section">
-                <button id="generateReport" class="btn">生成报告</button>
-                <div id="reportResult" class="report-result" style="display: none;">
-                    <h3>验证报告</h3>
-                    <div id="reportContent"></div>
-                    <button id="exportCSV" class="btn">导出CSV</button>
-                </div>
+            <div class="button-group-center">
+                <button id="extractData" class="btn">数据获取</button>
+                <button id="validateData" class="btn">数据校验</button>
+            </div>
+        </div>
+
+        <div class="form-section" id="logSection">
+            <h2>操作日志</h2>
+            <div id="logContent" class="log-content"></div>
+        </div>
+
+        <div class="form-section report-result">
+            <h2>验证报告</h2>
+            <div class="report-button-container">
+                <button id="generateReport" class="btn btn-blue">生成验证报告</button>
             </div>
         </div>
     </div>
