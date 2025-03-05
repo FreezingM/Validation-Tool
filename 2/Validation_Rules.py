@@ -54,12 +54,16 @@ def is_homogeneous_chain():
 
 HOMOGENEOUS_CHAIN = is_homogeneous_chain()
 
-# 校验冗余数据（仅同构链）
 def check_redundant_data(original, migrated, fields, log_category, entity_id):
     if HOMOGENEOUS_CHAIN:
         for field in fields:
-            if original.get(field) != migrated.get(field):
+            original_value = original.get(field)
+            migrated_value = migrated.get(field)
+
+            # 只在字段存在且不相等时记录日志
+            if original_value is not None and migrated_value is not None and original_value != migrated_value:
                 logs[log_category].append(f"{entity_id} 的 {field} 不一致")
+
 
 # 校验数值型数据（适用于异构链）
 def check_numeric_data(original, migrated, fields, log_category, entity_id):
@@ -115,7 +119,7 @@ def check_transaction_consistency(sampled_blocks):
                 continue
             check_redundant_data(original_tx, migrated_tx, ["sender", "receiver", "actions"], "transaction_logs", f"交易 {original_tx['tx_id']}")
 
-# 校验账户状态一致性（新增 RAM 信息校验）
+# 校验账户状态一致性
 def check_account_state_consistency(sampled_blocks):
     for original_block in sampled_blocks:
         original_accounts = original_state_collection.find({"block_number": original_block["block_number"]})
@@ -155,12 +159,16 @@ def verify_data_consistency(start_block, end_block, sampling_mode="sample"):
         logs["block_validation_time"] = {}  # 只在第一次调用时初始化
     query = {"block_number": {"$gte": start_block, "$lte": end_block}}
     original_blocks = list(original_header_collection.find(query))
-    
-    sampled_blocks = random.sample(original_blocks, max(1, int(len(original_blocks) * 0.3))) if len(original_blocks) > 1 else original_blocks
-    
+
+    if sampling_mode == "full":  # 新增参数 "full"
+        sampled_blocks = original_blocks  # 全量校验
+    else:
+        sampled_blocks = random.sample(original_blocks, max(1, int(len(original_blocks) * 0.3))) if len(original_blocks) > 1 else original_blocks
+
     check_block_consistency(sampled_blocks)
     check_transaction_consistency(sampled_blocks)
     check_account_state_consistency(sampled_blocks)
+    check_gas_consistency(sampled_blocks)
     check_block_logs(sampled_blocks)
     print("校验完成！")
 
